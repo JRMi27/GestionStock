@@ -1,28 +1,29 @@
 package pro;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 
-public class GestionReception extends JFrame {
+public class SaisirQuantitesPreparees extends JFrame {
     private JComboBox<String> commandesBox;
     private JTextField quantiteField;
     private JButton enregistrerButton;
     private Connection connection;
 
-    public GestionReception() {
+    public SaisirQuantitesPreparees() {
         // Connexion à la base de données
         try {
             connection = DatabaseConnection.getConnection();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erreur de connexion à la base de données !");
-            return; // Si la connexion échoue, on arrête l'initialisation
+            return;
         }
 
-        // Interface graphique
-        setTitle("Gestion de Réception des Commandes");
+        // Configuration de la fenêtre
+        setTitle("Saisir Quantités Préparées");
         setSize(400, 300);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(null);
 
         JLabel commandeLabel = new JLabel("Sélectionner une commande :");
@@ -33,7 +34,7 @@ public class GestionReception extends JFrame {
         commandesBox.setBounds(220, 20, 150, 30);
         add(commandesBox);
 
-        JLabel quantiteLabel = new JLabel("Quantité reçue :");
+        JLabel quantiteLabel = new JLabel("Quantité préparée :");
         quantiteLabel.setBounds(20, 70, 200, 30);
         add(quantiteLabel);
 
@@ -45,23 +46,22 @@ public class GestionReception extends JFrame {
         enregistrerButton.setBounds(150, 150, 100, 30);
         add(enregistrerButton);
 
-        // Charger les commandes en attente
+        // Charger les commandes
         loadCommandes();
 
-        // Action sur le bouton enregistrer
+        // Action pour enregistrer
         enregistrerButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                enregistrerQuantite();
+                enregistrerQuantitePreparee();
             }
         });
 
         setVisible(true);
     }
 
-    // Méthode pour charger les commandes dans la comboBox
     private void loadCommandes() {
         try {
-            String query = "SELECT id, dateCommande FROM cmdeapprodepot WHERE statutCommande = 'En attente'";
+            String query = "SELECT id, dateCommande FROM cmdeapprodepot WHERE statutCommande = 'En cours de préparation'";
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery(query);
 
@@ -74,27 +74,26 @@ public class GestionReception extends JFrame {
         }
     }
 
-    // Méthode pour enregistrer la quantité reçue
-    private void enregistrerQuantite() {
+    private void enregistrerQuantitePreparee() {
         String selectedCommande = (String) commandesBox.getSelectedItem();
-        int idCommande = Integer.parseInt(selectedCommande.split(" ")[1]); // Récupérer l'ID de la commande
-        int quantiteReçue = Integer.parseInt(quantiteField.getText());
+        int idCommande = Integer.parseInt(selectedCommande.split(" ")[1]);
+        int quantitePreparee = Integer.parseInt(quantiteField.getText());
 
         try {
-            String query = "UPDATE cmdeapprodepot SET quantiteRecue = ? WHERE id = ?";
+            String query = "UPDATE cmdeapprodepot SET quantitePreparee = ?, statutCommande = 'Prête pour livraison' WHERE id = ?";
             PreparedStatement pstmt = connection.prepareStatement(query);
-            pstmt.setInt(1, quantiteReçue);
+            pstmt.setInt(1, quantitePreparee);
             pstmt.setInt(2, idCommande);
             pstmt.executeUpdate();
 
-            JOptionPane.showMessageDialog(this, "Quantité enregistrée avec succès !");
+            JOptionPane.showMessageDialog(this, "Quantité préparée enregistrée avec succès !");
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors de l'enregistrement de la quantité !");
+            JOptionPane.showMessageDialog(this, "Erreur lors de l'enregistrement !");
         }
     }
 
     public static void main(String[] args) {
-        new GestionReception();
+        new SaisirQuantitesPreparees();
     }
 }
